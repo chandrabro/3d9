@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nepali Story Studio – 3D rural story maker</title>
+  <meta name="description" content="Free, browser-only 3D animated story generator for Nepali rural-life videos." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌾</text></svg>" />
+</head>
+<body>
+  <div id="app">
+    <header id="top">
+      <div class="brand">🌾 <b>Nepali Story Studio</b></div>
+      <input id="projName" class="pname" title="Project name" />
+      <div class="spacer"></div>
+      <button id="bNew" title="New project">New</button>
+      <button id="bOpen" title="Open a saved project (.json)">Open</button>
+      <button id="bSave" title="Save project as a file">Save</button>
+      <label class="chk" title="Embed audio files inside the saved project file"><input type="checkbox" id="saveAudio" checked /> with audio</label>
+      <button id="bTools" title="Script → scenes, import 2D stories, subtitles, version history…">🧰 Tools ▾</button>
+      <button id="bSettings" title="Speech bubbles, subtitles, watermark, video format">⚙ Settings</button>
+      <button id="bVoices">🎙 Voices</button>
+      <button id="bMeasureAll" title="Measure the real speech length of every dialog in every scene (silent), then space lines and lengthen scenes to fit">⏱ Measure all</button>
+      <label class="sel">Quality <select id="quality"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label>
+      <button id="bExport" class="primary">⬇ Export video</button>
+      <input type="file" id="fileOpen" accept=".json,application/json" hidden />
+    </header>
+    <aside id="left"></aside>
+    <section id="center">
+      <div id="view"><canvas id="gl"></canvas><div id="hud"></div><div id="loading">Loading 3D scene…</div></div>
+      <div id="transport"></div>
+      <div id="timeline"></div>
+    </section>
+    <aside id="right"></aside>
+    <div id="rzr" title="Drag to resize the side panel"></div>
+  </div>
+  <div id="toolsMenu" class="menu" hidden></div>
+  <div id="modal" hidden></div>
+  <div id="toast" hidden></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
