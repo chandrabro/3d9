@@ -10,6 +10,7 @@ import { BUBBLE_STYLES } from './overlay.js';
 import { BD_WEATHER, BD_FILTERS } from './data.js';
 import { parseScript, buildScenes, scenesToScript, SCRIPT_EXAMPLE } from './script.js';
 import { import2dProject } from './import2d.js';
+import { PRESETS, PRESET_MAP } from './scenes2d/presets.js';
 import { snapshot, listSnapshots, loadSnapshot } from './history.js';
 import { defaultSubtitles, SUB_STYLES, SUB_MODES, toSrt, toVtt } from './subtitles.js';
 
@@ -165,10 +166,29 @@ function renderRight() {
   ({ chars: tabChars, props: tabProps, dialog: tabDialog, camera: tabCamera })[tab](R);
 }
 
+
+function appearanceEditor(R, ch, sc) {
+  const a = ch.app, o = (a.outfit ||= {}); a.hair ||= { style: 'short', color: '#141414' };
+  const rebuild = () => { touch(); engine.syncEntities(sc); engine.select(sel, sc, gizmoMode); frame(); };
+  const col = (obj, key) => { const el = h('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(obj[key] || '') ? obj[key] : '#888888' }); el.onchange = () => { obj[key] = el.value; rebuild(); }; return el; };
+  const sel2 = (obj, key, list, def) => select(list.map(x => Array.isArray(x) ? x : [x, x.replace(/_/g, ' ')]), obj[key] ?? def, v => { obj[key] = v; rebuild(); });
+  R.append(h('h3', {}, '🧑 Appearance (library character)'));
+  R.append(row('Character', select(PRESETS.map(p => [p.id, p.name]), ch.presetId || 'custom_male', v => { const p = PRESET_MAP[v]; ch.app = structuredClone(p.app); ch.presetId = v; renderRight(); rebuild(); })));
+  R.append(row('Skin / hair', col(a, 'skin'), col(a.hair, 'color'), sel2(a.hair, 'style', ['bald', 'buzz', 'short', 'side_part', 'spiky', 'curly', 'receding', 'long', 'bun', 'braid', 'ponytail', 'pigtails', 'bob'], 'short')));
+  R.append(row('Face', sel2(a, 'facialHair', ['none', 'stubble', 'mustache', 'beard', 'full_beard', 'goatee'], 'none'), sel2(a, 'glasses', ['none', 'glasses', 'round_glasses', 'sunglasses'], 'none')));
+  R.append(row('Hat', sel2(o, 'hat', ['none', 'cap', 'police_cap', 'pilot_cap', 'helmet', 'chef_hat', 'cowboy_hat', 'crown', 'grad_cap', 'headband', 'hijab', 'bandana', 'beret', 'nurse_cap', 'santa_hat', 'topi', 'turban', 'wizard_hat', 'astronaut_helmet'], 'none'), col(o, 'hatColor')));
+  R.append(row('Top', sel2(o, 'top', ['tshirt', 'shirt', 'blouse', 'hoodie', 'suit', 'uniform', 'kurta', 'daura', 'dress', 'sari', 'labcoat', 'coat', 'robe', 'vest'], 'tshirt'), col(o, 'topColor'), col(o, 'trimColor')));
+  R.append(row('Sleeves', sel2(o, 'sleeves', [['long', 'Long'], ['short', 'Short'], ['none', 'Sleeveless']], 'short'), sel2(o, 'bottom', [['pants', 'Pants'], ['shorts', 'Shorts'], ['skirt', 'Skirt'], ['dhoti', 'Dhoti'], ['suruwal', 'Suruwal'], ['none', 'None (dress)']], 'pants'), col(o, 'bottomColor')));
+  R.append(row('Shoes', sel2(o, 'shoes', [['sneakers', 'Sneakers'], ['formal', 'Formal'], ['boots', 'Boots'], ['sandals', 'Sandals'], ['heels', 'Heels'], ['barefoot', 'Barefoot']], 'sneakers'), col(o, 'shoeColor')));
+  R.append(row('Body', sel2(a, 'build', [['adult', 'Adult'], ['tall', 'Tall'], ['teen', 'Teen'], ['child', 'Child'], ['elder', 'Elder']], 'adult'), sel2(a, 'weight', [['average', 'Average'], ['slim', 'Slim'], ['heavy', 'Heavy']], 'average'), sel2(a, 'gender', [['male', 'Male'], ['female', 'Female']], 'male')));
+}
+
 function tabChars(R) {
   const sc = scene(); R.append(h('h3', {}, `Characters in scene (${sc.chars.length}/${MAX_CHARS})`));
   const add = select(CHAR_ORDER.map(k => [k, CHARS[k].name]), 'woman', () => { });
   R.append(row('', add, h('button', { class: 'primary sm', disabled: sc.chars.length >= MAX_CHARS, onclick: () => { const ch = newChar(add.value, sc); sc.chars.push(ch); engine.syncEntities(sc); selectEntity({ kind: 'char', id: ch.id }); touch(); } }, '+ Add')));
+  const lib = select(PRESETS.map(p => [p.id, p.name]), 'nepali_farmer', () => { });
+  R.append(row('Library', lib, h('button', { class: 'primary sm', disabled: sc.chars.length >= MAX_CHARS, title: '44 ready-made characters from the 2D StoryStage project', onclick: () => { const p = PRESET_MAP[lib.value]; const ch = newChar('custom', sc, structuredClone(p.app), p.id); ch.name = p.app.name; sc.chars.push(ch); engine.syncEntities(sc); selectEntity({ kind: 'char', id: ch.id }); touch(); } }, '+ Add')));
   if (sc.chars.length >= MAX_CHARS) R.append(h('div', { class: 'muted small' }, 'Maximum 5 characters per scene.'));
   sc.chars.forEach(ch => R.append(h('div', { class: 'item' + (sel?.id === ch.id ? ' sel' : ''), onclick: () => selectEntity({ kind: 'char', id: ch.id }) }, h('span', { class: 'grow' }, ch.name),
     h('button', { class: 'sm danger', onclick: e => { e.stopPropagation(); sc.dialogs = sc.dialogs.filter(d => d.charId !== ch.id); sc.chars = sc.chars.filter(c => c.id !== ch.id); if (sel?.id === ch.id) sel = null; engine.syncEntities(sc); engine.select(sel, sc, gizmoMode); frame(); touch(); renderAll(); } }, '✕'))));
@@ -176,6 +196,7 @@ function tabChars(R) {
   const kind = CHARS[ch.type].kind === 'animal' ? 'animal' : 'human';
   R.append(h('h3', {}, 'Selected: ' + ch.name));
   R.append(row('Name', txt(ch, 'name', () => { })));
+  if (ch.type === 'custom' && ch.app) appearanceEditor(R, ch, sc);
   R.append(row('Position', h('span', {}, 'X '), num(ch, 'x', { after: () => engine.select(sel, sc, gizmoMode), w: '64px' }), h('span', {}, 'Z '), num(ch, 'z', { after: () => engine.select(sel, sc, gizmoMode), w: '64px' })));
   R.append(row('Facing °', num(ch, 'facing', { step: 5, after: () => engine.select(sel, sc, gizmoMode), w: '70px' }), h('span', { class: 'muted small' }, '0 = toward the default camera, 180 = away')));
   R.append(row('Scale', num(ch, 'scale', { min: 0.3, max: 3, step: 0.05, w: '70px' }), h('span', {}, 'Speed'), num(ch, 'speed', { min: 0.1, max: 8, step: 0.1, w: '64px' }), h('span', { class: 'muted' }, 'm/s')));
@@ -544,7 +565,8 @@ $('#bTools').onclick = (e) => {
   e.stopPropagation(); if (!toolsMenu.hidden) { toolsMenu.hidden = true; return; }
   const r = e.currentTarget.getBoundingClientRect(); toolsMenu.style.left = Math.min(r.left, innerWidth - 290) + 'px'; toolsMenu.style.right = 'auto'; toolsMenu.style.top = r.bottom + 4 + 'px';
   toolsMenu.innerHTML = ''; toolsMenu.append(
-    menuItem('📝 Script → scenes (text to scene maker)', openScriptTool),
+    menuItem('📝 Script → scenes (text to scene maker)', () => openScriptTool()),
+    menuItem('📂 Import a script from a .txt file…', pickScriptFile),
     menuItem('📄 Download story as script (.txt)', () => { download(new Blob([scenesToScript(project)], { type: 'text/plain;charset=utf-8' }), (project.name || 'story').replace(/[^\w\- ]+/g, '') + '-script.txt'); }),
     h('hr'),
     menuItem('📚 Sample stories (2D StoryStage)…', openSamples),
@@ -586,13 +608,22 @@ function openHistory() {
   list.forEach(x => box.append(h('div', { class: 'histrow' }, h('span', {}, `${new Date(x.time).toLocaleString()} · ${x.scenes} scenes · ${x.reason}`), h('button', { class: 'sm', onclick: () => { const p = loadSnapshot(x.id); if (!p) return; snapshot(project, 'before restore'); project = migrateProject(p); project.voices ||= structuredClone(DEFAULT_VOICES); $('#projName').value = project.name || ''; touch(false); closeModal(); goScene(0); toast('Snapshot restored'); } }, 'Restore'))));
   box.append(h('div', { class: 'row' }, h('button', { onclick: closeModal }, 'Close'))); modal(box);
 }
-function openScriptTool() {
-  const box = h('div'); const ta = h('textarea', { class: 'big', spellcheck: 'false', placeholder: 'Write your story as a script…' }); ta.value = SCRIPT_EXAMPLE;
+async function readTextFile(f) {
+  const buf = new Uint8Array(await f.arrayBuffer()); let enc = 'utf-8';
+  if (buf[0] === 0xFF && buf[1] === 0xFE) enc = 'utf-16le'; else if (buf[0] === 0xFE && buf[1] === 0xFF) enc = 'utf-16be';
+  return new TextDecoder(enc).decode(buf).replace(/^\uFEFF/, '');
+}
+const pickScriptFile = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.txt,.md,.text,text/plain'; i.onchange = async () => { const f = i.files[0]; if (f) openScriptTool(await readTextFile(f), f.name); }; i.click(); };
+function openScriptTool(initial, fileName) {
+  const box = h('div'); const ta = h('textarea', { class: 'big', spellcheck: 'false', placeholder: 'Write your story as a script, or load a .txt file…' }); ta.value = initial ?? SCRIPT_EXAMPLE;
+  const loadBtn = h('button', { class: 'sm', title: 'Load a script from a .txt file (UTF-8 / UTF-16)' }, '📂 Load .txt file'), fileLbl = h('span', { class: 'muted small' }, fileName ? '📄 ' + fileName : 'or drop a .txt file here');
+  loadBtn.onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.txt,.md,.text,text/plain'; i.onchange = async () => { const f = i.files[0]; if (f) { ta.value = await readTextFile(f); fileLbl.textContent = '📄 ' + f.name; } }; i.click(); };
+  ta.ondragover = (e) => { e.preventDefault(); }; ta.ondrop = async (e) => { const f = e.dataTransfer?.files?.[0]; if (f) { e.preventDefault(); e.stopPropagation(); ta.value = await readTextFile(f); fileLbl.textContent = '📄 ' + f.name; } };
   const warn = h('ul', { class: 'warnlist', hidden: true }); const mode = select([['append', 'Add as new scenes at the end'], ['replace', 'Replace the whole project']], 'append', () => { });
   const go = h('button', { class: 'primary' }, '✨ Create scenes'), cur = h('button', { class: 'sm' }, 'Load my current story as script'), close = h('button', {}, 'Close');
   box.append(h('h2', {}, '📝 Script → scenes'), h('p', { class: 'small muted' }, 'One line per speech: Name: text. A line starting with # starts a new scene (# Title | Background). Backgrounds: the 3D village scenes or any of the 50 painted ones (Kitchen, Classroom, Riverbank, vegetable_farm …).'),
     h('div', { class: 'small muted', style: { lineHeight: 1.6 } }, 'Narrator: voice-over · Sita (f, old): new character (tags f m old child teen tall + role: farmer, employee, group, goat…) · Ram [wave]: line while waving · [Ram: walk to right] · [Ram: walk to Sita] · [+Sita: wave] at the same time · @time evening · @weather rain · @camera close-up · @closeups on · @title Big title'),
-    ta, warn, row('', mode, go, cur, close));
+    h('div', { class: 'row' }, loadBtn, fileLbl), ta, warn, row('', mode, go, cur, close));
   modal(box).classList.add('wide'); close.onclick = closeModal; cur.onclick = () => { ta.value = scenesToScript(project); };
   go.onclick = () => {
     const parsed = parseScript(ta.value); if (!parsed.blocks.length) { warn.hidden = false; warn.innerHTML = '<li>Nothing to create – write some lines first.</li>'; return; }
@@ -620,6 +651,14 @@ $('#bSettings').onclick = () => {
     h('h3', {}, '🎞 Video'), row('Default format', select([['16:9', '16:9 landscape'], ['9:16', '9:16 vertical'], ['1:1', '1:1 square'], ['4:5', '4:5 portrait'], ['4:3', '4:3']], project.aspect || '16:9', v => { project.aspect = v; touch(false); })),
     row('Watermark', txt(project, 'watermark', () => frame())), h('div', { class: 'row' }, h('button', { class: 'primary', onclick: closeModal }, 'Done'))); modal(box);
 };
+
+/* ---- drop a .txt script (or a 2D StoryStage .json) anywhere on the window ---- */
+window.addEventListener('dragover', (e) => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
+window.addEventListener('drop', async (e) => {
+  const f = e.dataTransfer?.files?.[0]; if (!f || e.defaultPrevented) return; e.preventDefault();
+  if (/\.(txt|md|text)$/i.test(f.name)) return openScriptTool(await readTextFile(f), f.name);
+  if (/\.json$/i.test(f.name)) { try { const data = JSON.parse(await readTextFile(f)); if (data.characters && data.scenes?.[0]?.actors) return adoptStory(import2dProject(data)); toast('Use 📂 Open for Nepali Story Studio project files'); } catch (er) { toast('Could not read that file: ' + er.message); } }
+});
 
 /* ---- resizable side panel ---- */
 (() => {

@@ -4,7 +4,7 @@ import { CHARS } from './data.js';
 // Which voice type a dialog uses: explicit override > character gender > narrator
 export function voiceTypeFor(scene, d) {
   if (d.voice && d.voice !== 'auto') return d.voice;
-  const ch = scene.chars.find(c => c.id === d.charId); const g = ch ? CHARS[ch.type].gender : 'none';
+  const ch = scene.chars.find(c => c.id === d.charId); const g = ch ? (ch.app?.gender || CHARS[ch.type].gender) : 'none';
   return g === 'male' || g === 'female' ? g : 'narrator';
 }
 

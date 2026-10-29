@@ -16,7 +16,7 @@ export function buildCharacter(ch) {
     GROUP_OFFSETS.forEach((o, i) => { const m = buildHuman('woman', i); m.root.position.set(o[0], 0, o[1]); m.root.rotation.y = (i - 1.5) * 0.12; root.add(m.root); members.push({ rig: m, i }); });
     return { kind: 'group', root, members };
   }
-  return buildHuman(d.look, ch.variant || 0);
+  return buildHuman(d.look, ch.variant || 0, ch.app || null);
 }
 
 function strideOf(rig, run) { return rig.kind === 'animal' ? rig.stride[run ? 1 : 0] : (run ? 2.6 : 1.5); }

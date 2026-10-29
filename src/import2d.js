@@ -3,6 +3,7 @@
 // and dialog, actions, captions, weather and camera moves are carried over.
 import { ENVS, CHARS, MAX_CHARS, TIMES } from './data.js';
 import { newScene, newChar, newDialog, speedFor, uid, dialogDur } from './model.js';
+import { PRESET_MAP } from './scenes2d/presets.js';
 
 const ACT = {
   idle: 'idle', talk: 'talk', sit_talk: 'sit', walk: 'walk', sad_walk: 'walk', run: 'run', sit: 'sit', wave: 'wave', namaste: 'wave', write: 'write', type: 'write', read: 'write',
@@ -45,8 +46,8 @@ export function import2dProject(data) {
     sc.tod = TOD[s2.tod] && TIMES[TOD[s2.tod]] ? TOD[s2.tod] : 'morning'; sc.weather = s2.weather || 'none'; sc.filter = s2.filter || 'none'; sc.vignette = s2.vignette !== false;
     const actorChar = [];
     (s2.actors || []).slice(0, MAX_CHARS).forEach((a, i) => {
-      const src = chars.get(a.characterId) || {}, { type, scale } = charType(src);
-      const ch = newChar(type, sc); ch.name = src.name || ch.name; ch.scale = scale * (a.scale || 1);
+      const src = chars.get(a.characterId) || {}; const app = structuredClone(src.appearance || PRESET_MAP[src.preset]?.app || PRESET_MAP.custom_male.app);
+      const ch = newChar('custom', sc, app, PRESET_MAP[src.preset] ? src.preset : null); ch.name = src.name || app.name || ch.name; ch.speed = speedFor('custom'); ch.scale = a.scale || 1;
       ch.x = r2((a.x - 640) / 1280 * 6.2); ch.z = r2(3 + clamp((a.y - 650) / 90, -1.2, 1.6));
       ch.facing = a.orientation === 'front' ? 0 : a.facing < 0 ? 290 : 70; ch.actions = [{ t: 0, action: 'idle', seat: '' }];
       const acts = [...(a.actions || [])].sort((x, y) => x.start - y.start); let walked = false;

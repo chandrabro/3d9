@@ -2,6 +2,7 @@
 import { ENVS, CHARS, ACTIONS, DEFAULT_VOICES } from './data.js';
 import { polyline, lerpAngle, smooth, clamp, lerp } from './util.js';
 import { defaultSubtitles } from './subtitles.js';
+import { PRESET_MAP } from './scenes2d/presets.js';
 
 let _id = Date.now() % 100000;
 export const uid = (p = 'id') => `${p}${(_id++).toString(36)}`;
@@ -22,10 +23,10 @@ export function newScene(envId) {
 
 export function speedFor(type) { const d = CHARS[type]; if (d.kind === 'animal') return d.animal === 'chicken' ? 0.6 : d.animal === 'pig' ? 0.8 : 0.9; return 1.2; }
 
-export function newChar(type, scene) {
-  const d = CHARS[type]; const n = scene.chars.filter(c => c.type === type).length;
+export function newChar(type, scene, app = null, presetId = null) {
+  const d = CHARS[type]; if (type === 'custom' && !app) app = structuredClone(PRESET_MAP.custom_male.app); const n = scene.chars.filter(c => c.type === type).length;
   const cam = scene.camera.start; const tx = cam.target[0], tz = cam.target[2];
-  return { id: uid('c'), type, name: d.name + (n ? ` ${n + 1}` : ''), x: tx + (scene.chars.length - 2) * 1.6, z: tz + 3.0, facing: 0, endFacing: null, scale: 1, speed: speedFor(type), path: [], pathStart: 0, actions: [{ t: 0, action: 'idle', seat: '' }], glb: null };
+  return { id: uid('c'), type, name: (app?.name || d.name) + (n ? ` ${n + 1}` : ''), app: type === 'custom' ? app : undefined, presetId: type === 'custom' ? (presetId || 'custom_male') : undefined, x: tx + (scene.chars.length - 2) * 1.6, z: tz + 3.0, facing: 0, endFacing: null, scale: 1, speed: speedFor(type), path: [], pathStart: 0, actions: [{ t: 0, action: 'idle', seat: '' }], glb: null };
 }
 export function newProp(type, scene) {
   const cam = scene.camera.start; return { id: uid('p'), type, x: cam.target[0] + (scene.props.length % 4) * 0.7 - 1, y: 0, z: cam.target[2] + 2.5, ry: 0, scale: 1, glb: null };

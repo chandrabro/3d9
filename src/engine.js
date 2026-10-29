@@ -132,8 +132,8 @@ export class Engine {
 
   syncEntities(scene) {
     const wantC = new Set(scene.chars.map(c => c.id));
-    for (const [id, o] of this.chars) if (!wantC.has(id) || o.type !== scene.chars.find(c => c.id === id)?.type) { this.charGroup.remove(o.rig.root); this.chars.delete(id); }
-    for (const ch of scene.chars) if (!this.chars.has(ch.id)) { const rig = buildCharacter(ch); rig.root.userData.entity = { kind: 'char', id: ch.id }; this.charGroup.add(rig.root); this.chars.set(ch.id, { rig, type: ch.type, glb: null }); if (ch.glb && this.glbCache.has(ch.glb)) { this.attachGlb('char', ch.id, this.glbCache.get(ch.glb)); this.chars.get(ch.id).glbKey = ch.glb; } }
+    for (const [id, o] of this.chars) if (!wantC.has(id) || o.type !== scene.chars.find(c => c.id === id)?.type || o.appKey !== JSON.stringify(scene.chars.find(c => c.id === id)?.app || null)) { this.charGroup.remove(o.rig.root); this.chars.delete(id); }
+    for (const ch of scene.chars) if (!this.chars.has(ch.id)) { const rig = buildCharacter(ch); rig.root.userData.entity = { kind: 'char', id: ch.id }; this.charGroup.add(rig.root); this.chars.set(ch.id, { rig, type: ch.type, glb: null, appKey: JSON.stringify(ch.app || null) }); if (ch.glb && this.glbCache.has(ch.glb)) { this.attachGlb('char', ch.id, this.glbCache.get(ch.glb)); this.chars.get(ch.id).glbKey = ch.glb; } }
     const wantP = new Set(scene.props.map(p => p.id));
     for (const [id, o] of this.props) if (!wantP.has(id)) { this.propGroup.remove(o.obj); this.props.delete(id); }
     for (const p of scene.props) if (!this.props.has(p.id)) { const obj = buildProp(p.type); obj.userData.entity = { kind: 'prop', id: p.id }; this.propGroup.add(obj); this.props.set(p.id, { obj }); if (p.glb && this.glbCache.has(p.glb)) { this.attachGlb('prop', p.id, this.glbCache.get(p.glb)); this.props.get(p.id).glbKey = p.glb; } }

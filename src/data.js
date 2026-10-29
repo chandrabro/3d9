@@ -127,12 +127,13 @@ export const CHARS = {
   oldman: { name: 'Old Rural Nepali Man', kind: 'human', gender: 'male', look: 'oldman' },
   mf1: { name: 'Microfinance Employee', kind: 'human', gender: 'male', look: 'mf1' },
   mf2: { name: 'Other Microfinance Employee', kind: 'human', gender: 'female', look: 'mf2' },
+  custom: { name: 'Library character (2D StoryStage)', kind: 'human', gender: 'male', look: 'custom' },
   women: { name: 'Group of Women', kind: 'group', gender: 'female', look: 'woman' },
   goat: { name: 'Goat', kind: 'animal', animal: 'goat', gender: 'none' },
   chicken: { name: 'Chicken', kind: 'animal', animal: 'chicken', gender: 'none' },
   pig: { name: 'Pig', kind: 'animal', animal: 'pig', gender: 'none' },
 };
-export const CHAR_ORDER = ['woman', 'oldman', 'mf1', 'mf2', 'women', 'goat', 'chicken', 'pig'];
+export const CHAR_ORDER = ['woman', 'oldman', 'mf1', 'mf2', 'custom', 'women', 'goat', 'chicken', 'pig'];
 
 /* ---------- Props ---------- */
 export const PROPS = {

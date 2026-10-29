@@ -4,12 +4,13 @@
 //   @time morning|noon|evening|night      @weather rain|snow|fog|sunrays|leaves (painted backgrounds)      @filter sepia|warm|cool|bw|dream|dark
 //   @camera wide|medium|close-up|over-the-shoulder|top view|low angle      @closeups on|off      @title Big title text
 //   Narrator: voice-over text
-//   Sita (f, old): a line spoken by Sita      tags (f) (m) (old) (child) (teen) (tall) + a role (farmer, employee, group, goat, chicken, pig ...) create a NEW character
+//   Sita (f, old): a line spoken by Sita      tags (f) (m) (old) (child) (teen) (tall) + a role create a NEW character: any library character (farmer, police, doctor, nurse, teacher, king, queen, wizard, pirate, chef, soldier, grandpa … or an exact id like nepali_police), or goat, chicken, pig, group
 //   Ram [wave]: Hello!                    the action is played while he speaks (default: talk)
 //   [Ram: walk to right]  [Ram: walk to Sita]  [Ram: sit for 4]  [Sita: face camera]
 //   [+Sita: laugh]                        "+" = at the same time as the next line (the story does not wait)
 //   // comment
 import { ENVS, CHARS, ACTIONS, TIMES, MAX_CHARS, BD_ORDER, ENV_ORDER, BD_WEATHER, BD_FILTERS } from './data.js';
+import { PRESETS, PRESET_MAP } from './scenes2d/presets.js';
 import { newScene, newChar, newDialog, presetCamera, dialogDur, speedFor, uid } from './model.js';
 
 const NARR = /^(narrator|narration|voice[- ]?over|नरेटर|वाचक|सूत्रधार|कथावाचक|नैरेटर)$/i;
@@ -84,8 +85,17 @@ export function parseScript(text) {
 }
 
 /* ---------------- building ---------------- */
+/** Find a ready-made 2D library character from a role word: farmer, police, doctor, king, wizard … or an exact id (nepali_police). */
+export function presetFor(role, gender) {
+  const r = norm(role).replace(/^preset:/, '').replace(/[\s-]+/g, '_'); if (!r || r.length < 3) return null;
+  const hit = (p) => p.id === r || p.id.includes(r) || norm(p.name).replace(/[^a-z]+/g, '_').includes(r);
+  let list = PRESETS.filter(hit).sort((a, b) => (b.id.startsWith('nepali') ? 1 : 0) - (a.id.startsWith('nepali') ? 1 : 0)); if (!list.length) return null;
+  const want = gender === 'f' ? 'female' : gender === 'm' ? 'male' : null; if (want) { const g = list.filter(p => p.app.gender === want); if (g.length) list = g; else { const alt = PRESETS.find(p => p.app.gender === want && (p.id.startsWith(list[0].id.replace(/_?(wo)?man$/, '')) || p.id.replace('woman', '') === list[0].id.replace('man', ''))); if (alt) list = [alt]; } }
+  return list[0];
+}
 function typeFor(info, used) {
   const { gender, age, role } = info; const r = norm(role);
+  const pr = presetFor(role, gender); if (pr) return { type: 'custom', scale: age === 'child' ? 0.65 : age === 'teen' ? 0.85 : age === 'tall' ? 1.1 : 1, app: structuredClone(pr.app), presetId: pr.id };
   if (r === 'goat' || r === 'chicken' || r === 'pig' || r === 'hen') return { type: r === 'hen' ? 'chicken' : r, scale: 1 };
   if (/^(group|women|villagers|crowd)$/.test(r)) return { type: 'women', scale: 1 };
   const female = gender === 'f' || (!gender && /woman|girl|mother|bua|didi|aama|ama|sita|radha|gita|maya/.test(norm(info.who)));
@@ -112,8 +122,8 @@ export function buildScenes(project, parsed) {
     const ensure = (name, info) => {
       let ch = find(name); if (ch) return ch;
       if (order.length >= MAX_CHARS) { warnings.push(`Scene "${sc.name}": more than ${MAX_CHARS} characters – "${name}" is skipped.`); return null; }
-      const used = new Set(order.map(c => c.type)); const { type, scale } = typeFor({ ...info, who: name }, used);
-      ch = newChar(type, sc); ch.name = name; ch.scale = scale; ch.speed = speedFor(type); ch.actions = [{ t: 0, action: 'idle', seat: '' }];
+      const used = new Set(order.map(c => c.type)); const { type, scale, app, presetId } = typeFor({ ...info, who: name }, used);
+      ch = newChar(type, sc, app, presetId); ch.name = name; ch.scale = scale; ch.speed = speedFor(type); ch.actions = [{ t: 0, action: 'idle', seat: '' }];
       sc.chars.push(ch); order.push(ch); byName.set(norm(name), ch); return ch;
     };
     for (const it of b.items) if (it.type === 'say' && it.who !== 'narrator') ensure(it.who, it);
@@ -198,7 +208,7 @@ export function scenesToScript(project) {
     for (const c of sc.captions || []) if (c.style === 'title') lines.push(`@title ${c.text}`);
     for (const d of [...sc.dialogs].sort((a, b) => a.t - b.t)) {
       if (!(d.text || '').trim()) continue; const ch = sc.chars.find(c => c.id === d.charId);
-      let who = 'Narrator'; if (ch) { const k = CHARS[ch.type]; const tags = [k.gender === 'female' ? 'f' : k.gender === 'male' ? 'm' : '', ch.scale < 0.8 ? 'child' : ''].filter(Boolean); who = ch.name + (tags.length ? ` (${tags.join(', ')})` : ''); }
+      let who = 'Narrator'; if (ch) { const k = CHARS[ch.type], gnd = ch.app?.gender || k.gender; const tags = [gnd === 'female' ? 'f' : gnd === 'male' ? 'm' : '', ch.scale < 0.8 ? 'child' : '', ch.presetId && ch.presetId !== 'custom_male' && ch.presetId !== 'custom_female' ? ch.presetId : ''].filter(Boolean); who = ch.name + (tags.length ? ` (${tags.join(', ')})` : ''); }
       lines.push(`${who}: ${d.text.trim()}`);
     }
   }

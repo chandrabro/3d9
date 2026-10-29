@@ -112,3 +112,15 @@ The toolbar button **⏱ Measure all** measures the speech of every dialog in ev
 - **Video formats:** 16:9, 9:16 (Shorts/Reels/TikTok), 1:1, 4:5 and 4:3 in the Export window.
 
 Note: the painted backdrops are flat pictures; for the best result keep characters standing around the centre of the frame and adjust *Shift up/down* so their feet sit on the painted floor.
+
+## Character library (all 44 characters of the 2D StoryStage project)
+
+- **Characters tab → Library → + Add:** farmers, police, doctor, nurse, teacher, king, queen, wizard, pirate, chef, soldier, pilot, grandparents, students, kids, bride/groom, monk … all as 3D characters built from the same adjustable parts as in the 2D project (skin, hair style + colour, beard, glasses, hat, outfit, sleeves, trousers/skirt/dhoti, shoes, accessories, build, weight).
+- After adding one, the **Appearance** panel lets you change any part and colour.
+- **In scripts:** use a role tag to pick a library character: `Raja (m, king): …`, `Ram (m, farmer): …`, `Sunita (f, police): …`, `Dr (m, doctor)`, or an exact id (`nepali_police`). Without a role, the original 3D Nepali characters are used.
+- **Imported 2D stories** use their own exact character looks.
+
+## Importing scripts from a .txt file
+
+- **🧰 Tools → 📂 Import a script from a .txt file…**, or **📂 Load .txt file** inside *Script → scenes*, or simply **drag & drop a .txt file onto the window** (a 2D StoryStage .json dropped on the window is imported too).
+- UTF-8 and UTF-16 (Windows "Unicode") text files with Devanagari are supported. The text is shown first so you can check it, then press ✨ Create scenes.
